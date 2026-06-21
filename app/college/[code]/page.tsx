@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCollegeIntel } from "@/lib/college";
-import { Stat, Tag, FundingBadge, pct, rank } from "@/components/ui";
+import { prestigeScore, prestigeTier } from "@/lib/prestige";
+import { Stat, Tag, FundingBadge, PrestigeBadge, pct, rank } from "@/components/ui";
 import BranchMatrix from "@/components/BranchMatrix";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,8 @@ export default async function CollegePage({ params }: { params: { code: string }
   const intel = await getCollegeIntel(params.code);
   if (!intel) notFound();
   const { college, branches, highest, lowest, branchCount, cutoffCount } = intel;
+  const prestige = prestigeScore(college.code);
+  const tier = prestigeTier(prestige);
 
   return (
     <div>
@@ -18,6 +21,7 @@ export default async function CollegePage({ params }: { params: { code: string }
       <header className="nb-card p-6">
         <div className="flex flex-wrap items-center gap-2">
           <Tag className="bg-ink text-paper">{college.code}</Tag>
+          <PrestigeBadge tier={tier} />
           <FundingBadge funding={college.funding} isGov={college.isGovernment} />
           {college.isAutonomous && <Tag className="bg-gold">Autonomous</Tag>}
           {college.isUniversityDept && <Tag className="bg-sky text-white">University Dept</Tag>}

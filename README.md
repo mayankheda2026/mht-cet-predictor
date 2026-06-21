@@ -88,8 +88,28 @@ Every extracted figure was spot-checked pixel-for-pixel against the source PDFs
 | **Safe** | margin ≥ 2 | comfortable backup |
 
 **Opportunity score** ranks "Best Matches" so the *strongest college you can actually
-get* leads the list (attainable options first, then by cutoff strength, government/
-autonomous reputation and branch demand), trailing into aspirational dreams.
+get* leads the list (attainable options first, then by cutoff strength, college
+prestige and branch demand), trailing into aspirational dreams.
+
+### College prestige (`lib/prestige.ts`)
+
+Reputation is no longer a crude government/autonomy flag. Each college gets a
+**0–100 prestige score** that fuses two signals:
+
+| Weight | Signal | Source |
+|---|---|---|
+| 0.6 | **Revealed flagship cutoff** — the highest OPEN/AI percentile the college actually commands (across Gender-Neutral *and* Ladies seats, so women-only colleges score on their real selectivity) | the live 2025-26 CAP data itself |
+| 0.4 | **Expert region tier band** (98+/95+/90+/80+) | counsellor *Template 2025*, region-curated |
+
+The blend is self-correcting: a college a counsellor ranked highly but whose cutoffs
+are soft gets pulled down, and a single freak high-cutoff seat can't inflate a weak
+college because the expert band damps it. Anchors were cross-checked against **NIRF
+2024** and published placement tiers — VJTI, COEP, ICT, SPIT, PICT, DJ Sanghvi,
+Walchand Sangli, Cummins, VESIT and PCCOE all land in the top **Elite** band.
+
+Scores map to five tiers — **Elite · Premier · Strong · Good · Emerging** — surfaced as
+badges across the finder, the leaderboard (now ranked by prestige) and each college
+page, and available as a dedicated **"Top Colleges"** sort.
 
 ---
 

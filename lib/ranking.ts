@@ -7,6 +7,7 @@
 // only super-linear step and stays O(n log n), comfortably handling 1000+ rows.
 
 import type { Tier } from "./domain";
+import { prestigeTier, type PrestigeTier } from "./prestige";
 
 // ---------------------------------------------------------------------------
 // Tunable constants
@@ -43,12 +44,15 @@ export const BRANCH_DESIRABILITY: Record<string, number> = {
 };
 const MAX_DESIRABILITY = 2.2;
 
-// Reputation proxies derived from the dataset (we have no placement/alumni
-// columns, so we lean on government status, autonomy, funding and selectivity).
-const FUNDING_BONUS: Record<string, number> = {
-  Government: 12,
-  "University Department": 10,
-  "University Managed": 8,
+// Small civic nudge on top of prestige: public / university institutions carry
+// real student value (far lower fees, public accountability) that a pure
+// competitiveness signal misses. Kept deliberately small so it only breaks ties
+// between colleges of comparable prestige — it never lifts a weak college over a
+// genuinely stronger private one (PICT, DJ Sanghvi, SPIT all outrank most govt).
+const CIVIC_BONUS: Record<string, number> = {
+  Government: 8,
+  "University Department": 6,
+  "University Managed": 5,
   "Un-Aided Private": 0,
   Unknown: 0,
 };
@@ -76,6 +80,7 @@ export type ScoreInput = {
   isAutonomous: boolean;
   isUniversityDept: boolean;
   funding: string;
+  prestige: number; // 0–100 college prestige (lib/prestige.ts)
 };
 
 export type ScorePrefs = {
@@ -89,9 +94,12 @@ export type ScoreBreakdown = {
   closeness: number;
   location: number;
   match: number; // weighted blend of the four, 0–100
+  prestige: number; // 0–100 college prestige (carried through for display & tiebreaks)
+  prestigeTier: PrestigeTier;
 };
 
-export type SortMode = "cutoff" | "match" | "alpha";
+export type SortMode = "cutoff" | "prestige" | "match" | "alpha";
+// Default to the objective truth from the CAP PDFs: highest closing cutoff first.
 export const DEFAULT_SORT: SortMode = "cutoff";
 
 // ---------------------------------------------------------------------------
@@ -111,15 +119,13 @@ export function branchScore(group: string, prefs: ScorePrefs): number {
 }
 
 export function reputationScore(o: ScoreInput): number {
-  let s = 0;
-  if (o.isGovernment) s += 42;
-  else if (o.isUniversityDept) s += 30;
-  if (o.isAutonomous) s += 20;
-  s += FUNDING_BONUS[o.funding] ?? 0;
-  // Selectivity proxy: sought-after colleges clear higher. Ramps 0→30 across
-  // the 60–100 percentile band so mid-tier colleges aren't all flattened to 0.
-  s += clamp(((o.cutoffPercentile - 60) / 40) * 30, 0, 30);
-  return clamp(s);
+  // College prestige (lib/prestige.ts) is the strongest reputation signal we
+  // have: it fuses each college's *revealed* flagship OPEN cutoff (the market's
+  // verdict, straight from the real 2025-26 CAP data) with an expert-curated
+  // region tier band, cross-checked against NIRF and published placement tiers.
+  // We anchor reputation on it and add only the small civic nudge above.
+  const civic = (CIVIC_BONUS[o.funding] ?? 0) + (o.isAutonomous ? 4 : 0);
+  return clamp(o.prestige * 0.9 + civic);
 }
 
 // Asymmetric on purpose: a cutoff you clear and sit close to is the sweet spot;
@@ -151,6 +157,8 @@ export function scoreOption(o: ScoreInput, prefs: ScorePrefs): ScoreBreakdown {
     closeness: round1(closeness),
     location: round1(location),
     match: round1(match),
+    prestige: round1(o.prestige),
+    prestigeTier: prestigeTier(o.prestige),
   };
 }
 
@@ -176,20 +184,29 @@ type Cmp<T> = (a: T, b: T) => number;
 
 const byCutoff: Cmp<Rankable> = (a, b) =>
   b.cutoffPercentile - a.cutoffPercentile || // 1° highest cutoff
-  b.scores.match - a.scores.match || // 2° best match
-  b.scores.reputation - a.scores.reputation; // 3° reputation
+  b.scores.prestige - a.scores.prestige || // 2° college prestige
+  b.scores.match - a.scores.match; // 3° best match
 
 const byMatch: Cmp<Rankable> = (a, b) =>
   b.scores.match - a.scores.match ||
-  b.cutoffPercentile - a.cutoffPercentile ||
-  b.scores.reputation - a.scores.reputation;
+  b.scores.prestige - a.scores.prestige ||
+  b.cutoffPercentile - a.cutoffPercentile;
+
+// Pure prestige order — the genuinely strongest colleges first, regardless of
+// how the cutoff happens to fit. Closeness still breaks ties so an attainable
+// option edges out an identical-prestige long-shot.
+const byPrestige: Cmp<Rankable> = (a, b) =>
+  b.scores.prestige - a.scores.prestige ||
+  b.scores.closeness - a.scores.closeness ||
+  b.cutoffPercentile - a.cutoffPercentile;
 
 const byAlpha: Cmp<Rankable> = (a, b) =>
   a.collegeName.localeCompare(b.collegeName) || a.branchName.localeCompare(b.branchName);
 
 const COMPARATORS: Record<SortMode, Cmp<Rankable>> = {
-  cutoff: byCutoff,
   match: byMatch,
+  prestige: byPrestige,
+  cutoff: byCutoff,
   alpha: byAlpha,
 };
 
@@ -204,6 +221,7 @@ export function sortOptions<T extends Rankable>(options: readonly T[], mode: Sor
 
 export const SORT_LABELS: Record<SortMode, string> = {
   cutoff: "Highest Cutoff",
-  match: "Best Match Score",
+  prestige: "Top Colleges",
+  match: "Best Match",
   alpha: "Alphabetical",
 };

@@ -16,6 +16,19 @@ export function TierBadge({ tier }: { tier: string }) {
   return <Tag className={TIER_BG[tier] ?? "bg-white"}>{tier}</Tag>;
 }
 
+// College prestige tier — fused from real flagship cutoffs + expert region tiers.
+const PRESTIGE_BG: Record<string, string> = {
+  Elite: "bg-ink text-acid",
+  Premier: "bg-flame text-white",
+  Strong: "bg-gold",
+  Good: "bg-white",
+  Emerging: "bg-white text-ink/60",
+};
+export function PrestigeBadge({ tier }: { tier: string }) {
+  if (tier === "Good" || tier === "Emerging") return null; // only flag standout colleges
+  return <Tag className={PRESTIGE_BG[tier] ?? "bg-white"}>★ {tier}</Tag>;
+}
+
 export function Stat({ label, value, accent = "bg-acid" }: { label: string; value: React.ReactNode; accent?: string }) {
   return (
     <div className="nb-card-sm p-4">

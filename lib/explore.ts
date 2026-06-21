@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import type { Prisma } from "@prisma/client";
+import { prestigeScore, prestigeTier, type PrestigeTier } from "./prestige";
 
 export type ExploreFilters = {
   pctMin?: number; pctMax?: number;
@@ -96,18 +97,37 @@ export async function facets() {
   };
 }
 
-export async function topColleges(limit = 24) {
-  // Rank colleges by their strongest OPEN/Gender-Neutral Round-1 cutoff.
+export type TopCollege = {
+  code: string; name: string; region: string; funding: string;
+  isGovernment: boolean; isAutonomous: boolean;
+  peak: number; prestige: number; tier: PrestigeTier;
+};
+
+export async function topColleges(limit = 24): Promise<TopCollege[]> {
+  // Rank colleges high→low by their strongest real CAP closing cutoff (the
+  // objective figure straight from the official round PDFs). We count OPEN and
+  // All-India seats across both Gender-Neutral and Ladies pools so women-only
+  // colleges are ranked on their genuine selectivity, and we attach the prestige
+  // tier (lib/prestige.ts) purely as a label/tiebreak — never to reorder cutoffs.
   const rows = await prisma.cutoff.findMany({
-    where: { category: "OPEN", gender: "Gender-Neutral", percentile: { not: null } },
+    where: { category: { in: ["OPEN", "AI"] }, percentile: { not: null } },
     select: { collegeCode: true, percentile: true, college: { select: { name: true, region: true, funding: true, isGovernment: true, isAutonomous: true } } },
   });
-  const best = new Map<string, { code: string; name: string; region: string; funding: string; isGovernment: boolean; isAutonomous: boolean; peak: number }>();
+  const best = new Map<string, TopCollege>();
   for (const r of rows) {
     if (r.percentile == null) continue;
     const cur = best.get(r.collegeCode);
-    if (!cur || r.percentile > cur.peak)
-      best.set(r.collegeCode, { code: r.collegeCode, name: r.college.name, region: r.college.region, funding: r.college.funding, isGovernment: r.college.isGovernment, isAutonomous: r.college.isAutonomous, peak: r.percentile });
+    if (!cur || r.percentile > cur.peak) {
+      const prestige = prestigeScore(r.collegeCode);
+      best.set(r.collegeCode, {
+        code: r.collegeCode, name: r.college.name, region: r.college.region,
+        funding: r.college.funding, isGovernment: r.college.isGovernment,
+        isAutonomous: r.college.isAutonomous, peak: r.percentile,
+        prestige, tier: prestigeTier(prestige),
+      });
+    }
   }
-  return [...best.values()].sort((a, b) => b.peak - a.peak).slice(0, limit);
+  return [...best.values()]
+    .sort((a, b) => b.peak - a.peak || b.prestige - a.prestige)
+    .slice(0, limit);
 }

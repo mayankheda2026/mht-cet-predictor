@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import type { Tier } from "./domain";
 import { classify, scoreOption, sortOptions, type ScoreBreakdown } from "./ranking";
+import { prestigeScore } from "./prestige";
 
 export { classify } from "./ranking";
 
@@ -113,6 +114,7 @@ export async function findOptions(input: FinderInput): Promise<FinderOption[]> {
           isAutonomous: r.college.isAutonomous,
           isUniversityDept: r.college.isUniversityDept,
           funding: r.college.funding,
+          prestige: prestigeScore(r.collegeCode),
         },
         { branchGroups: input.branchGroups, preferredRegion: input.region },
       );

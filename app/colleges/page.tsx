@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { topColleges } from "@/lib/explore";
-import { Tag, FundingBadge, pct, SectionTitle } from "@/components/ui";
+import { Tag, FundingBadge, PrestigeBadge, pct, SectionTitle } from "@/components/ui";
 import CollegeBrowser from "@/components/CollegeBrowser";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +26,7 @@ export default async function CollegesPage() {
             <div className="min-w-0 flex-1">
               <div className="truncate font-display text-base leading-tight">{c.name}</div>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <PrestigeBadge tier={c.tier} />
                 <Tag className="bg-white">{c.region}</Tag>
                 {c.isGovernment && <Tag className="bg-mint">Govt</Tag>}
               </div>

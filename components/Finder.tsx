@@ -5,7 +5,7 @@ import { CATEGORIES, CATEGORY_LABEL, REGIONS, BRANCH_GROUPS, TIER_META } from "@
 import { sortOptions, SORT_LABELS, DEFAULT_SORT, type SortMode } from "@/lib/ranking";
 import OptionCard from "./OptionCard";
 
-const SORT_MODES: SortMode[] = ["cutoff", "match", "alpha"];
+const SORT_MODES: SortMode[] = ["cutoff", "prestige", "match", "alpha"];
 
 type Result = {
   total: number;

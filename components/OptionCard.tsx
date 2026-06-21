@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { FinderOption } from "@/lib/finder";
-import { Tag, TierBadge, pct, rank } from "./ui";
+import { Tag, TierBadge, PrestigeBadge, pct, rank } from "./ui";
 
 const TIER_EDGE: Record<string, string> = {
   Dream: "border-l-grape", Target: "border-l-sky", Safe: "border-l-mint",
@@ -24,6 +24,7 @@ export default function OptionCard({ o, idx }: { o: FinderOption; idx?: number }
               </span>
             )}
             <TierBadge tier={o.tier} />
+            <PrestigeBadge tier={o.scores.prestigeTier} />
             <Tag className="bg-white">{o.branchGroup}</Tag>
             {o.isGovernment && <Tag className="bg-mint">Govt</Tag>}
             {o.isAutonomous && <Tag className="bg-gold">Autonomous</Tag>}
