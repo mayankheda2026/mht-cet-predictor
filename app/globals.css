@@ -12,50 +12,98 @@ body {
   background-color: #FDFBF7;
   color: #0A0A0A;
   font-family: var(--font-sans);
-  background-image:
-    linear-gradient(#0a0a0a0a 1px, transparent 1px),
-    linear-gradient(90deg, #0a0a0a0a 1px, transparent 1px);
-  background-size: 28px 28px;
+  /* A whisper of a dot grid instead of a loud line grid — texture, not noise. */
+  background-image: radial-gradient(rgba(10, 10, 10, 0.045) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Accessible, on-brand focus ring everywhere. */
+*:focus-visible {
+  outline: 3px solid #0A0A0A;
+  outline-offset: 2px;
+  border-radius: 1px;
 }
 
 @layer components {
-  .nb-card {
-    @apply bg-white border-3 border-ink shadow-hard;
-  }
+  /* Primary surface. Default shadow is now lighter (4px) so the page breathes;
+     lift to shadow-hardlg on the few moments that deserve it. */
+  .nb-card { @apply bg-white border-3 border-ink shadow-hard; }
   .nb-card-sm { @apply bg-white border-3 border-ink shadow-hardsm; }
+  /* Quiet secondary surface — border only, no shadow. The 25% noise cut. */
+  .nb-panel { @apply bg-white border-3 border-ink; }
 
   .nb-btn {
     @apply inline-flex items-center justify-center gap-2 border-3 border-ink bg-white
            px-5 py-3 font-display uppercase tracking-tight shadow-hardsm
-           transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none
-           hover:-translate-y-[1px] disabled:opacity-50 disabled:pointer-events-none select-none;
+           transition-[transform,box-shadow] duration-150 ease-brut
+           hover:-translate-y-[2px] hover:shadow-hard
+           active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
+           disabled:opacity-50 disabled:pointer-events-none select-none;
   }
   .nb-btn-acid { @apply nb-btn bg-acid; }
-  .nb-btn-ink { @apply nb-btn bg-ink text-paper; }
+  .nb-btn-ink { @apply nb-btn bg-ink text-paper hover:shadow-hardacid; }
   .nb-btn-flame { @apply nb-btn bg-flame text-white; }
 
   .nb-input {
     @apply w-full border-3 border-ink bg-white px-4 py-3 font-sans text-lg
-           outline-none focus:shadow-hardsm focus:-translate-y-[1px] transition-all placeholder:text-ink/40;
+           outline-none transition-all duration-150 ease-brut
+           focus:shadow-hardsm focus:-translate-y-[1px] placeholder:text-ink/40;
   }
   .nb-chip {
     @apply inline-flex items-center gap-1.5 border-3 border-ink bg-white px-3 py-1.5
            text-sm font-bold uppercase tracking-tight cursor-pointer select-none
-           transition-all hover:shadow-hardsm;
+           transition-all duration-150 ease-brut hover:-translate-y-[1px] hover:shadow-hardsm;
   }
-  .nb-chip-on { @apply bg-ink text-paper; }
+  .nb-chip-on { @apply bg-ink text-paper shadow-hardsm -translate-y-[1px]; }
   .nb-tag {
-    @apply inline-block border-2 border-ink px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide;
+    @apply inline-flex items-center border-2 border-ink px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide;
   }
-  .nb-label { @apply block text-xs font-display uppercase tracking-widest mb-2 text-ink/70; }
-  .nb-h1 { @apply font-display uppercase leading-[0.92] tracking-tight; }
+  .nb-label { @apply block text-[11px] font-display uppercase tracking-[0.18em] mb-2 text-ink/55; }
+  .nb-h1 { @apply font-display uppercase leading-[0.9] tracking-[-0.02em]; }
+
+  /* Skeleton shimmer for loading states. */
+  .nb-skeleton {
+    @apply relative overflow-hidden bg-cloud border-3 border-ink;
+  }
+  .nb-skeleton::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    animation: shimmer 1.4s infinite;
+  }
 }
+
+/* staggered entrance for result lists */
+.stagger > * { animation: riseIn 0.5s cubic-bezier(.16, 1, .3, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(7) { animation-delay: 240ms; }
+.stagger > *:nth-child(8) { animation-delay: 280ms; }
+
+@keyframes shimmer { 100% { transform: translateX(100%); } }
 
 /* marquee */
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.animate-marquee { animation: marquee 26s linear infinite; }
+.animate-marquee { animation: marquee 38s linear infinite; }
+.marquee-mask { -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
 
 /* custom scrollbar */
 ::-webkit-scrollbar { height: 10px; width: 10px; }
 ::-webkit-scrollbar-track { background: #FDFBF7; }
 ::-webkit-scrollbar-thumb { background: #0A0A0A; border: 2px solid #FDFBF7; }
+
+/* Respect reduced-motion: kill non-essential animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

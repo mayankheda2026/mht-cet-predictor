@@ -1,19 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import Link from "next/link";
+import NavBar from "@/components/NavBar";
 
 export const metadata: Metadata = {
   title: "CAPSTONE — MHT-CET Admission Intelligence",
   description:
     "Enter your percentile, get the best Maharashtra engineering colleges & branches ranked from highest opportunity to lowest. Built on official CAP cutoff data.",
 };
-
-const NAV = [
-  { href: "/", label: "Finder" },
-  { href: "/explore", label: "Explore" },
-  { href: "/colleges", label: "Colleges" },
-  { href: "/search", label: "Search" },
-];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -27,39 +20,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <header className="sticky top-0 z-50 border-b-3 border-ink bg-paper">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-            <Link href="/" className="group flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center border-3 border-ink bg-acid font-display text-lg shadow-hardsm">
-                C
-              </span>
-              <span className="font-display text-xl uppercase tracking-tight">Capstone</span>
-            </Link>
-            <nav className="flex items-center gap-1 sm:gap-2">
-              {NAV.map((n) => (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className="border-3 border-transparent px-2 py-1.5 font-display text-sm uppercase tracking-tight hover:border-ink hover:bg-white hover:shadow-hardsm sm:px-3"
-                >
-                  {n.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </header>
-        <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
-        <footer className="mt-16 border-t-3 border-ink bg-ink text-paper">
-          <div className="mx-auto max-w-7xl px-4 py-10">
-            <div className="font-display text-2xl uppercase">Capstone</div>
-            <p className="mt-2 max-w-xl text-sm text-paper/70">
-              An independent admission-intelligence tool built on official MHT-CET CAP
-              Round 1–4 cutoff lists (Academic Year 2025-26). Cutoffs indicate past
-              trends and are not a guarantee of admission. Verify on the official DTE /
-              CET Cell portal before making decisions.
-            </p>
-            <p className="mt-4 text-xs text-paper/50">
-              Data: State CET Cell, Govt. of Maharashtra · 75,208 cutoff records · 372 institutes · 4 CAP rounds.
+        <NavBar />
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+        <footer className="mt-20 border-t-3 border-ink bg-ink text-paper">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <span className="grid h-9 w-9 place-items-center border-3 border-paper bg-acid font-display text-lg text-ink">
+                    C
+                  </span>
+                  <span className="font-display text-2xl uppercase tracking-tight">Capstone</span>
+                </div>
+                <p className="mt-4 max-w-xl text-sm leading-relaxed text-paper/70">
+                  An independent admission-intelligence tool built on official MHT-CET CAP
+                  Round 1–4 cutoff lists (Academic Year 2025-26). Cutoffs indicate past
+                  trends and are not a guarantee of admission. Always verify on the official
+                  DTE / CET Cell portal before making decisions.
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-x-8 gap-y-1 text-right">
+                {[["75,208", "Cutoffs"], ["372", "Institutes"], ["4", "CAP Rounds"]].map(([n, l]) => (
+                  <div key={l}>
+                    <div className="font-display text-2xl leading-none text-acid">{n}</div>
+                    <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-paper/50">{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="mt-8 border-t border-paper/15 pt-5 text-xs text-paper/45">
+              Data source: State CET Cell, Government of Maharashtra · Built as an independent capstone project.
             </p>
           </div>
         </footer>

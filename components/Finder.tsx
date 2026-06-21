@@ -4,6 +4,7 @@ import type { FinderOption } from "@/lib/finder";
 import { CATEGORIES, CATEGORY_LABEL, REGIONS, BRANCH_GROUPS, TIER_META } from "@/lib/domain";
 import { sortOptions, SORT_LABELS, DEFAULT_SORT, type SortMode } from "@/lib/ranking";
 import OptionCard from "./OptionCard";
+import PercentileMeter from "./PercentileMeter";
 
 const SORT_MODES: SortMode[] = ["cutoff", "prestige", "match", "alpha"];
 
@@ -27,6 +28,7 @@ export default function Finder() {
   const [homeRegion, setHomeRegion] = useState("");
   const [region, setRegion] = useState("");
   const [branchGroups, setBranchGroups] = useState<string[]>([]);
+  const [advanced, setAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<Result | null>(null);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Best Matches");
@@ -35,6 +37,9 @@ export default function Finder() {
 
   const toggle = (g: string) =>
     setBranchGroups((s) => (s.includes(g) ? s.filter((x) => x !== g) : [...s, g]));
+
+  const pnum = parseFloat(percentile);
+  const meterVal = isFinite(pnum) && pnum >= 0 && pnum <= 100 ? pnum : null;
 
   // Deep-link prefill from /?p=95.5&cat=OPEN&region=Pune&bg=Computer%20%26%20IT
   useEffect(() => {
@@ -76,8 +81,6 @@ export default function Finder() {
     } finally { setLoading(false); }
   }
 
-  // Pick the active tier, then apply the chosen sort once (memoised so we only
-  // re-sort when the data, tab or sort mode actually changes — cheap for 1000+).
   const list = useMemo(() => {
     if (!res) return [];
     const base =
@@ -89,23 +92,33 @@ export default function Finder() {
     <div>
       {/* ---- Form ---- */}
       <form onSubmit={run} className="nb-card p-5 sm:p-7">
-        <div className="grid gap-5 lg:grid-cols-[1.1fr_2fr]">
-          <div className="border-3 border-ink bg-acid p-5 shadow-hardsm">
-            <label className="nb-label">Your Percentile</label>
-            <input
-              autoFocus
-              inputMode="decimal"
-              value={percentile}
-              onChange={(e) => setPercentile(e.target.value)}
-              placeholder="95.50"
-              className="w-full border-b-5 border-ink bg-transparent pb-1 font-display text-6xl outline-none placeholder:text-ink/30"
-            />
-            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-ink/70">
-              MHT-CET / JEE percentile · type & hit enter
-            </p>
+        <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+          {/* Percentile + signature meter */}
+          <div className="border-3 border-ink bg-white p-5 sm:p-6">
+            <div className="flex items-baseline justify-between">
+              <label htmlFor="pct" className="nb-label mb-0">Your Percentile</label>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">MHT-CET / JEE</span>
+            </div>
+            <div className="mt-1 flex items-end gap-1">
+              <input
+                id="pct"
+                autoFocus
+                inputMode="decimal"
+                value={percentile}
+                onChange={(e) => setPercentile(e.target.value)}
+                placeholder="95.50"
+                aria-describedby="pct-meter"
+                className="w-full border-b-5 border-ink bg-transparent pb-1 font-display text-6xl tabular-nums outline-none transition-colors placeholder:text-ink/20 focus:border-acid sm:text-7xl"
+              />
+              <span className="pb-3 font-display text-3xl text-ink/30">%</span>
+            </div>
+            <div id="pct-meter" className="mt-5">
+              <PercentileMeter value={meterVal} />
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          {/* Key controls */}
+          <div className="flex flex-col gap-4">
             <Field label="Category">
               <select value={category} onChange={(e) => setCategory(e.target.value)} className="nb-input">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{CATEGORY_LABEL[c] ?? c}</option>)}
@@ -114,103 +127,122 @@ export default function Finder() {
             <Field label="Gender">
               <div className="flex gap-2">
                 {[["Gender-Neutral", "All"], ["Female", "Female"]].map(([v, l]) => (
-                  <button type="button" key={v} onClick={() => setGender(v)}
+                  <button type="button" key={v} onClick={() => setGender(v)} aria-pressed={gender === v}
                     className={`nb-chip flex-1 justify-center py-3 ${gender === v ? "nb-chip-on" : ""}`}>{l}</button>
                 ))}
               </div>
             </Field>
-            <Field label="Seat Type">
-              <div className="flex gap-2">
-                {[[false, "General"], [true, "PWD"]].map(([v, l]) => (
-                  <button type="button" key={String(v)} onClick={() => setPwd(v as boolean)}
-                    className={`nb-chip flex-1 justify-center py-3 ${pwd === v ? "nb-chip-on" : ""}`}>{l as string}</button>
+            <div className="mt-auto">
+              <label className="nb-label">Preferred branches <span className="normal-case tracking-normal text-ink/35">— optional</span></label>
+              <div className="flex flex-wrap gap-1.5">
+                {BRANCH_GROUPS.map((g) => (
+                  <button type="button" key={g} onClick={() => toggle(g)} aria-pressed={branchGroups.includes(g)}
+                    className={`nb-chip text-xs ${branchGroups.includes(g) ? "nb-chip-on" : ""}`}>{g}</button>
                 ))}
               </div>
-            </Field>
-            <Field label="Admission Type">
-              <div className="flex gap-2">
-                {(["MH", "AI"] as const).map((v) => (
-                  <button type="button" key={v} onClick={() => setAdmissionType(v)}
-                    className={`nb-chip flex-1 justify-center py-3 ${admissionType === v ? "nb-chip-on" : ""}`}>
-                    {v === "MH" ? "MH State" : "All India"}
-                  </button>
-                ))}
-              </div>
-            </Field>
-            <Field label="Home University Region">
-              <select value={homeRegion} onChange={(e) => setHomeRegion(e.target.value)} className="nb-input"
-                disabled={admissionType === "AI"}>
-                <option value="">Not sure / any</option>
-                {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </Field>
-            <Field label="Preferred College Region">
-              <select value={region} onChange={(e) => setRegion(e.target.value)} className="nb-input">
-                <option value="">All regions</option>
-                {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </Field>
-            <Field label="Quick action">
-              <button type="submit" disabled={loading} className="nb-btn-ink w-full py-3 text-lg">
-                {loading ? "Crunching…" : "Find My Colleges →"}
-              </button>
-            </Field>
+            </div>
+            <button type="submit" disabled={loading} className="nb-btn-ink w-full py-4 text-lg">
+              {loading ? "Crunching…" : "Find My Colleges →"}
+            </button>
           </div>
         </div>
 
-        <div className="mt-5">
-          <label className="nb-label">Preferred Branches <span className="text-ink/40">(optional — leave empty for all)</span></label>
-          <div className="flex flex-wrap gap-2">
-            {BRANCH_GROUPS.map((g) => (
-              <button type="button" key={g} onClick={() => toggle(g)}
-                className={`nb-chip ${branchGroups.includes(g) ? "nb-chip-on" : ""}`}>{g}</button>
-            ))}
-          </div>
+        {/* Advanced filters — progressive disclosure keeps the form calm */}
+        <div className="mt-5 border-t-3 border-ink/10 pt-4">
+          <button
+            type="button"
+            onClick={() => setAdvanced((a) => !a)}
+            aria-expanded={advanced}
+            className="inline-flex items-center gap-2 font-display text-xs uppercase tracking-widest text-ink/60 transition-colors hover:text-ink"
+          >
+            <span className={`grid h-5 w-5 place-items-center border-2 border-ink transition-transform duration-200 ease-brut ${advanced ? "rotate-45 bg-acid" : "bg-white"}`}>+</span>
+            Advanced filters
+            <span className="text-ink/35">{advanced ? "" : "— admission type, region, PWD seats"}</span>
+          </button>
+
+          {advanced && (
+            <div className="mt-4 grid animate-riseIn gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Field label="Admission Type">
+                <div className="flex gap-2">
+                  {(["MH", "AI"] as const).map((v) => (
+                    <button type="button" key={v} onClick={() => setAdmissionType(v)} aria-pressed={admissionType === v}
+                      className={`nb-chip flex-1 justify-center py-3 ${admissionType === v ? "nb-chip-on" : ""}`}>
+                      {v === "MH" ? "MH State" : "All India"}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+              <Field label="Seat Type">
+                <div className="flex gap-2">
+                  {[[false, "General"], [true, "PWD"]].map(([v, l]) => (
+                    <button type="button" key={String(v)} onClick={() => setPwd(v as boolean)} aria-pressed={pwd === v}
+                      className={`nb-chip flex-1 justify-center py-3 ${pwd === v ? "nb-chip-on" : ""}`}>{l as string}</button>
+                  ))}
+                </div>
+              </Field>
+              <Field label="Home University Region">
+                <select value={homeRegion} onChange={(e) => setHomeRegion(e.target.value)} className="nb-input" disabled={admissionType === "AI"}>
+                  <option value="">Not sure / any</option>
+                  {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </Field>
+              <Field label="Preferred College Region">
+                <select value={region} onChange={(e) => setRegion(e.target.value)} className="nb-input">
+                  <option value="">All regions</option>
+                  {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </Field>
+            </div>
+          )}
         </div>
-        {err && <p className="mt-4 border-3 border-ink bg-flame px-3 py-2 font-bold text-white">{err}</p>}
+
+        {err && (
+          <p className="mt-4 flex items-center gap-2 border-3 border-ink bg-flame px-3 py-2 font-bold text-white animate-popIn">
+            <span aria-hidden>⚠</span> {err}
+          </p>
+        )}
       </form>
 
+      {/* ---- Loading skeleton ---- */}
+      {loading && !res && <ResultsSkeleton />}
+
       {/* ---- Results ---- */}
-      {res && (
-        <div className="mt-8">
+      {res && !loading && (
+        <div className="mt-8 animate-riseIn">
           {res.total === 0 ? (
-            <div className="nb-card p-8 text-center">
+            <div className="nb-card p-10 text-center">
               <div className="font-display text-2xl">No matching seats found</div>
-              <p className="mt-2 text-ink/70">Try widening your filters — clear the region or branch selection.</p>
+              <p className="mt-2 text-ink/60">Try widening your filters — clear the region or branch selection.</p>
             </div>
           ) : (
             <>
               <div className="mb-5 grid grid-cols-3 gap-3">
-                <Bucket title="Dream" n={res.counts.dream} blurb={TIER_META.Dream.blurb} bg="bg-grape text-white" />
-                <Bucket title="Target" n={res.counts.target} blurb={TIER_META.Target.blurb} bg="bg-sky text-white" />
-                <Bucket title="Safe" n={res.counts.safe} blurb={TIER_META.Safe.blurb} bg="bg-mint" />
+                <Bucket title="Dream" n={res.counts.dream} blurb={TIER_META.Dream.blurb} bg="bg-grape text-white" active={tab === "Dream"} onClick={() => setTab("Dream")} />
+                <Bucket title="Target" n={res.counts.target} blurb={TIER_META.Target.blurb} bg="bg-sky text-white" active={tab === "Target"} onClick={() => setTab("Target")} />
+                <Bucket title="Safe" n={res.counts.safe} blurb={TIER_META.Safe.blurb} bg="bg-mint" active={tab === "Safe"} onClick={() => setTab("Safe")} />
               </div>
 
-              <div className="mb-4 flex flex-wrap items-center gap-2 border-b-3 border-ink pb-3">
+              <div className="sticky top-[60px] z-30 -mx-1 mb-4 flex flex-wrap items-center gap-2 border-b-3 border-ink bg-paper/85 px-1 py-3 backdrop-blur-md">
                 {TABS.map((t) => (
-                  <button key={t} onClick={() => setTab(t)}
+                  <button key={t} onClick={() => setTab(t)} aria-pressed={tab === t}
                     className={`nb-chip ${tab === t ? "nb-chip-on" : ""}`}>{t}</button>
                 ))}
-                <span className="ml-auto text-sm font-bold text-ink/60">
-                  {res.total} options
-                </span>
+                <span className="ml-auto text-sm font-bold text-ink/50">{res.total} options</span>
               </div>
 
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <span className="nb-label mb-0 mr-1">Sort by</span>
+                <span className="nb-label mb-0 mr-1">Sort</span>
                 {SORT_MODES.map((m) => (
-                  <button key={m} onClick={() => setSort(m)}
+                  <button key={m} onClick={() => setSort(m)} aria-pressed={sort === m}
                     className={`nb-chip ${sort === m ? "nb-chip-on" : ""}`}>{SORT_LABELS[m]}</button>
                 ))}
-                <span className="ml-auto text-xs font-semibold uppercase tracking-wide text-ink/50">
-                  {list.length} shown
-                </span>
+                <span className="ml-auto text-xs font-semibold uppercase tracking-wide text-ink/45">{list.length} shown</span>
               </div>
 
               {list.length === 0 ? (
-                <p className="nb-card-sm p-6 text-ink/70">No options in this tier — check the other tabs.</p>
+                <p className="nb-card-sm p-6 text-ink/60">No options in this tier — check the other tabs.</p>
               ) : (
-                <div className="grid gap-4">
+                <div className="stagger grid gap-4">
                   {list.map((o, i) => (
                     <OptionCard key={`${o.collegeCode}-${o.branchCode}`} o={o} idx={tab === "Best Matches" ? i : undefined} />
                   ))}
@@ -233,14 +265,32 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Bucket({ title, n, blurb, bg }: { title: string; n: number; blurb: string; bg: string }) {
+function Bucket({ title, n, blurb, bg, active, onClick }: { title: string; n: number; blurb: string; bg: string; active: boolean; onClick: () => void }) {
   return (
-    <div className={`border-3 border-ink ${bg} p-3 shadow-hardsm sm:p-4`}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`group border-3 border-ink ${bg} p-3 text-left shadow-hardsm transition-[transform,box-shadow] duration-200 ease-brut hover:-translate-y-[2px] hover:shadow-hard sm:p-4 ${active ? "-translate-y-[2px] shadow-hard ring-[3px] ring-ink ring-offset-2 ring-offset-paper" : ""}`}
+    >
       <div className="flex items-baseline justify-between">
         <span className="font-display text-sm uppercase tracking-tight sm:text-base">{title}</span>
-        <span className="font-display text-2xl sm:text-3xl">{n}</span>
+        <span className="font-display text-2xl tabular-nums sm:text-3xl">{n}</span>
       </div>
       <p className="mt-1 hidden text-xs opacity-90 sm:block">{blurb}</p>
+    </button>
+  );
+}
+
+function ResultsSkeleton() {
+  return (
+    <div className="mt-8">
+      <div className="mb-5 grid grid-cols-3 gap-3">
+        {[0, 1, 2].map((i) => <div key={i} className="nb-skeleton h-20" />)}
+      </div>
+      <div className="grid gap-4">
+        {[0, 1, 2, 3, 4].map((i) => <div key={i} className="nb-skeleton h-[104px]" />)}
+      </div>
     </div>
   );
 }
