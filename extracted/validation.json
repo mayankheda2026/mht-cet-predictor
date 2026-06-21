@@ -1,0 +1,118 @@
+{
+  "files": [
+    {
+      "file": "Cap round 1 AI cutoff.pdf",
+      "round": 1,
+      "type": "AI",
+      "rows": 1901,
+      "branch_blocks": 1888
+    },
+    {
+      "file": "Cap round 1 MH cutoff.pdf",
+      "round": 1,
+      "type": "MH",
+      "rows": 32738,
+      "branch_blocks": 2134
+    },
+    {
+      "file": "Cap round 2 AI cutoff.pdf",
+      "round": 2,
+      "type": "AI",
+      "rows": 1723,
+      "branch_blocks": 1703
+    },
+    {
+      "file": "Cap round 2 MH cutoff.pdf",
+      "round": 2,
+      "type": "MH",
+      "rows": 21269,
+      "branch_blocks": 2107
+    },
+    {
+      "file": "Cap round 3 AI cutoff.pdf",
+      "round": 3,
+      "type": "AI",
+      "rows": 1431,
+      "branch_blocks": 1419
+    },
+    {
+      "file": "Cap round 3 MH cutoff.pdf",
+      "round": 3,
+      "type": "MH",
+      "rows": 11171,
+      "branch_blocks": 2079
+    },
+    {
+      "file": "Cap round 4 AI cutoff.pdf",
+      "round": 4,
+      "type": "AI",
+      "rows": 1338,
+      "branch_blocks": 1294
+    },
+    {
+      "file": "Cap round 4 MH cutoff.pdf",
+      "round": 4,
+      "type": "MH",
+      "rows": 7428,
+      "branch_blocks": 2052
+    }
+  ],
+  "warnings": [],
+  "summary": {
+    "raw_rows": 78999,
+    "deduped_rows": 75208,
+    "duplicates_collapsed": 3791,
+    "colleges": 372,
+    "branches": 2041,
+    "rows_with_rank": 75195,
+    "rows_with_percentile": 75195,
+    "rows_missing_rank": 13,
+    "rows_missing_percentile": 13,
+    "invalid_percentile_rows": 0,
+    "rows_without_category": 0,
+    "by_admission_type": {
+      "AI": 6347,
+      "MH": 68861
+    },
+    "by_round": {
+      "1": 32741,
+      "2": 21958,
+      "3": 12070,
+      "4": 8439
+    },
+    "by_category": {
+      "AI": 6347,
+      "OPEN": 19014,
+      "SC": 9837,
+      "ST": 2502,
+      "VJ": 3155,
+      "NT1": 2887,
+      "NT2": 4217,
+      "NT3": 2469,
+      "OBC": 12511,
+      "SEBC": 7714,
+      "TFWS": 2501,
+      "ORPHAN": 100,
+      "EWS": 1954
+    },
+    "by_seat_level": {
+      "All India": 6347,
+      "State Level": 29580,
+      "Home University": 22868,
+      "Other Than Home University": 16413
+    },
+    "by_gender": {
+      "Gender-Neutral": 52555,
+      "Female": 22653
+    },
+    "by_region": {
+      "Amravati": 23,
+      "Chh. Sambhajinagar": 40,
+      "Mumbai": 77,
+      "Nagpur": 40,
+      "Nashik": 59,
+      "Pune": 133
+    },
+    "distinct_seat_type_codes": 91
+  }
+}

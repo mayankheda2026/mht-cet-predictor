@@ -1,0 +1,81 @@
+// MHT-CET Admission Intelligence — data model
+// Runnable default: SQLite (zero-config). For production Postgres, change
+// provider to "postgresql" and DATABASE_URL to your Postgres connection string;
+// the schema is otherwise identical.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model College {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  name            String
+  funding         String // Government, Un-Aided Private, University Department, ...
+  isGovernment    Boolean   @default(false)
+  isAutonomous    Boolean   @default(false)
+  isUniversityDept Boolean  @default(false)
+  isMinority      Boolean   @default(false)
+  minorityType    String?
+  homeUniversity  String?
+  region          String
+  district        String
+  branches        Branch[]
+  cutoffs         Cutoff[]
+
+  @@index([region])
+  @@index([funding])
+}
+
+model Branch {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  name        String
+  group       String // normalized branch family (Computer & IT, AI & Data Science, ...)
+  college     College  @relation(fields: [collegeCode], references: [code])
+  collegeCode String
+  cutoffs     Cutoff[]
+
+  @@index([group])
+  @@index([collegeCode])
+}
+
+model Cutoff {
+  id            Int     @id @default(autoincrement())
+  college       College @relation(fields: [collegeCode], references: [code])
+  collegeCode   String
+  branch        Branch  @relation(fields: [branchCode], references: [code])
+  branchCode    String
+
+  admissionType String // MH | AI
+  capRound      Int // 1..4
+  section       String // State Level | Home University | Other Than Home University | All India Seats
+  level         String // State Level | Home University | Other Than Home University | All India | Minority
+  stage         String
+
+  seatTypeCode  String // raw column code e.g. GOPENS, LSCS, PWDOPENS, TFWS, EWS
+  category      String // OPEN, SC, ST, VJ, NT1, NT2, NT3, OBC, SEBC, EWS, TFWS, ORPHAN, AI
+  gender        String // Gender-Neutral | Female
+
+  isPwd         Boolean @default(false)
+  isDefence     Boolean @default(false)
+  isReserved    Boolean @default(false)
+  isTfws        Boolean @default(false)
+  isEws         Boolean @default(false)
+  isOrphan      Boolean @default(false)
+  isMinority    Boolean @default(false)
+
+  meritRank     Int?
+  percentile    Float?
+
+  @@index([percentile])
+  @@index([category, gender, level])
+  @@index([admissionType, capRound])
+  @@index([collegeCode])
+  @@index([branchCode])
+  @@index([category])
+}

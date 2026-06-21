@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Archivo Black", "Arial Black", sans-serif;
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background-color: #FDFBF7;
+  color: #0A0A0A;
+  font-family: var(--font-sans);
+  background-image:
+    linear-gradient(#0a0a0a0a 1px, transparent 1px),
+    linear-gradient(90deg, #0a0a0a0a 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@layer components {
+  .nb-card {
+    @apply bg-white border-3 border-ink shadow-hard;
+  }
+  .nb-card-sm { @apply bg-white border-3 border-ink shadow-hardsm; }
+
+  .nb-btn {
+    @apply inline-flex items-center justify-center gap-2 border-3 border-ink bg-white
+           px-5 py-3 font-display uppercase tracking-tight shadow-hardsm
+           transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none
+           hover:-translate-y-[1px] disabled:opacity-50 disabled:pointer-events-none select-none;
+  }
+  .nb-btn-acid { @apply nb-btn bg-acid; }
+  .nb-btn-ink { @apply nb-btn bg-ink text-paper; }
+  .nb-btn-flame { @apply nb-btn bg-flame text-white; }
+
+  .nb-input {
+    @apply w-full border-3 border-ink bg-white px-4 py-3 font-sans text-lg
+           outline-none focus:shadow-hardsm focus:-translate-y-[1px] transition-all placeholder:text-ink/40;
+  }
+  .nb-chip {
+    @apply inline-flex items-center gap-1.5 border-3 border-ink bg-white px-3 py-1.5
+           text-sm font-bold uppercase tracking-tight cursor-pointer select-none
+           transition-all hover:shadow-hardsm;
+  }
+  .nb-chip-on { @apply bg-ink text-paper; }
+  .nb-tag {
+    @apply inline-block border-2 border-ink px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide;
+  }
+  .nb-label { @apply block text-xs font-display uppercase tracking-widest mb-2 text-ink/70; }
+  .nb-h1 { @apply font-display uppercase leading-[0.92] tracking-tight; }
+}
+
+/* marquee */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.animate-marquee { animation: marquee 26s linear infinite; }
+
+/* custom scrollbar */
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-track { background: #FDFBF7; }
+::-webkit-scrollbar-thumb { background: #0A0A0A; border: 2px solid #FDFBF7; }
