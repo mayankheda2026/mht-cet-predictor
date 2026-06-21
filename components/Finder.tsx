@@ -210,7 +210,7 @@ export default function Finder() {
               {list.length === 0 ? (
                 <p className="nb-card-sm p-6 text-ink/70">No options in this tier — check the other tabs.</p>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4">
                   {list.map((o, i) => (
                     <OptionCard key={`${o.collegeCode}-${o.branchCode}`} o={o} idx={tab === "Best Matches" ? i : undefined} />
                   ))}
