@@ -8,6 +8,9 @@ import PercentileMeter from "./PercentileMeter";
 
 const SORT_MODES: SortMode[] = ["cutoff", "prestige", "match", "alpha"];
 
+const fmtTop = (top: number) =>
+  top <= 0 ? "0" : top < 1 ? top.toFixed(2) : top < 10 ? top.toFixed(1) : Math.round(top).toString();
+
 type Result = {
   total: number;
   counts: { dream: number; target: number; safe: number };
@@ -91,15 +94,16 @@ export default function Finder() {
   return (
     <div>
       {/* ---- Form ---- */}
-      <form onSubmit={run} className="nb-card p-5 sm:p-7">
-        <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
-          {/* Percentile + signature meter */}
-          <div className="border-3 border-ink bg-white p-5 sm:p-6">
+      <form onSubmit={run} className="nb-card p-5 shadow-hardlg sm:p-7">
+        <div className="grid gap-7 lg:grid-cols-[1.05fr_1fr]">
+          {/* LEFT — percentile + signature meter */}
+          <div className="lg:border-r-3 lg:border-ink/10 lg:pr-7">
             <div className="flex items-baseline justify-between">
               <label htmlFor="pct" className="nb-label mb-0">Your Percentile</label>
               <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">MHT-CET / JEE</span>
             </div>
-            <div className="mt-1 flex items-end gap-1">
+
+            <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1">
               <input
                 id="pct"
                 autoFocus
@@ -108,31 +112,58 @@ export default function Finder() {
                 onChange={(e) => setPercentile(e.target.value)}
                 placeholder="95.50"
                 aria-describedby="pct-meter"
-                className="w-full border-b-5 border-ink bg-transparent pb-1 font-display text-6xl tabular-nums outline-none transition-colors placeholder:text-ink/20 focus:border-acid sm:text-7xl"
+                className="w-[3.4em] bg-transparent font-display text-6xl leading-none tabular-nums text-grape outline-none placeholder:text-grape/20 sm:text-7xl"
               />
-              <span className="pb-3 font-display text-3xl text-ink/30">%</span>
+              {meterVal != null ? (
+                <div className="leading-tight animate-popIn">
+                  <div className="font-display text-xl uppercase tracking-tight text-grape sm:text-2xl">
+                    Top {fmtTop(100 - meterVal)}%
+                  </div>
+                  <div className="text-sm font-semibold text-ink/45">of CET students</div>
+                </div>
+              ) : (
+                <div className="text-sm font-semibold leading-tight text-ink/40">
+                  Type or drag<br />to begin
+                </div>
+              )}
             </div>
-            <div id="pct-meter" className="mt-5">
-              <PercentileMeter value={meterVal} />
+
+            <div id="pct-meter" className="mt-6">
+              <PercentileMeter value={meterVal} onChange={(val) => setPercentile(val.toFixed(2))} />
             </div>
           </div>
 
-          {/* Key controls */}
+          {/* RIGHT — controls */}
           <div className="flex flex-col gap-4">
-            <Field label="Category">
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="nb-input">
-                {CATEGORIES.map((c) => <option key={c} value={c}>{CATEGORY_LABEL[c] ?? c}</option>)}
-              </select>
-            </Field>
-            <Field label="Gender">
-              <div className="flex gap-2">
-                {[["Gender-Neutral", "All"], ["Female", "Female"]].map(([v, l]) => (
-                  <button type="button" key={v} onClick={() => setGender(v)} aria-pressed={gender === v}
-                    className={`nb-chip flex-1 justify-center py-3 ${gender === v ? "nb-chip-on" : ""}`}>{l}</button>
-                ))}
-              </div>
-            </Field>
-            <div className="mt-auto">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Category">
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="nb-input">
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{CATEGORY_LABEL[c] ?? c}</option>)}
+                </select>
+              </Field>
+              <Field label="Admission Type">
+                <select value={admissionType} onChange={(e) => setAdmissionType(e.target.value as "MH" | "AI")} className="nb-input">
+                  <option value="MH">MH State Level</option>
+                  <option value="AI">All India</option>
+                </select>
+              </Field>
+              <Field label="Gender">
+                <div className="flex gap-2">
+                  {[["Gender-Neutral", "All"], ["Female", "Female"]].map(([val, l]) => (
+                    <button type="button" key={val} onClick={() => setGender(val)} aria-pressed={gender === val}
+                      className={`nb-chip flex-1 justify-center py-3 ${gender === val ? "nb-chip-on" : ""}`}>{l}</button>
+                  ))}
+                </div>
+              </Field>
+              <Field label="Seat Type">
+                <select value={pwd ? "pwd" : "all"} onChange={(e) => setPwd(e.target.value === "pwd")} className="nb-input">
+                  <option value="all">All Seats</option>
+                  <option value="pwd">PWD Reserved</option>
+                </select>
+              </Field>
+            </div>
+
+            <div>
               <label className="nb-label">Preferred branches <span className="normal-case tracking-normal text-ink/35">— optional</span></label>
               <div className="flex flex-wrap gap-1.5">
                 {BRANCH_GROUPS.map((g) => (
@@ -141,59 +172,54 @@ export default function Finder() {
                 ))}
               </div>
             </div>
-            <button type="submit" disabled={loading} className="nb-btn-ink w-full py-4 text-lg">
-              {loading ? "Crunching…" : "Find My Colleges →"}
+
+            {/* Advanced filters — progressive disclosure keeps the form calm */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setAdvanced((a) => !a)}
+                aria-expanded={advanced}
+                className="inline-flex items-center gap-2 font-display text-xs uppercase tracking-widest text-ink/55 transition-colors hover:text-ink"
+              >
+                <span className={`grid h-5 w-5 place-items-center border-2 border-ink transition-transform duration-200 ease-brut ${advanced ? "rotate-45 bg-acid" : "bg-white"}`}>+</span>
+                Advanced — region & home university
+              </button>
+              {advanced && (
+                <div className="mt-3 grid animate-riseIn gap-4 sm:grid-cols-2">
+                  <Field label="Home University Region">
+                    <select value={homeRegion} onChange={(e) => setHomeRegion(e.target.value)} className="nb-input" disabled={admissionType === "AI"}>
+                      <option value="">Not sure / any</option>
+                      {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Preferred College Region">
+                    <select value={region} onChange={(e) => setRegion(e.target.value)} className="nb-input">
+                      <option value="">All regions</option>
+                      {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </Field>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="nb-btn-acid group mt-auto w-full py-5 text-xl shadow-hard"
+            >
+              {loading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-[3px] border-ink/25 border-t-ink" />
+                  Crunching…
+                </>
+              ) : (
+                <>
+                  Find My Colleges
+                  <span className="transition-transform duration-200 ease-brut group-hover:translate-x-1.5">→</span>
+                </>
+              )}
             </button>
           </div>
-        </div>
-
-        {/* Advanced filters — progressive disclosure keeps the form calm */}
-        <div className="mt-5 border-t-3 border-ink/10 pt-4">
-          <button
-            type="button"
-            onClick={() => setAdvanced((a) => !a)}
-            aria-expanded={advanced}
-            className="inline-flex items-center gap-2 font-display text-xs uppercase tracking-widest text-ink/60 transition-colors hover:text-ink"
-          >
-            <span className={`grid h-5 w-5 place-items-center border-2 border-ink transition-transform duration-200 ease-brut ${advanced ? "rotate-45 bg-acid" : "bg-white"}`}>+</span>
-            Advanced filters
-            <span className="text-ink/35">{advanced ? "" : "— admission type, region, PWD seats"}</span>
-          </button>
-
-          {advanced && (
-            <div className="mt-4 grid animate-riseIn gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Admission Type">
-                <div className="flex gap-2">
-                  {(["MH", "AI"] as const).map((v) => (
-                    <button type="button" key={v} onClick={() => setAdmissionType(v)} aria-pressed={admissionType === v}
-                      className={`nb-chip flex-1 justify-center py-3 ${admissionType === v ? "nb-chip-on" : ""}`}>
-                      {v === "MH" ? "MH State" : "All India"}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-              <Field label="Seat Type">
-                <div className="flex gap-2">
-                  {[[false, "General"], [true, "PWD"]].map(([v, l]) => (
-                    <button type="button" key={String(v)} onClick={() => setPwd(v as boolean)} aria-pressed={pwd === v}
-                      className={`nb-chip flex-1 justify-center py-3 ${pwd === v ? "nb-chip-on" : ""}`}>{l as string}</button>
-                  ))}
-                </div>
-              </Field>
-              <Field label="Home University Region">
-                <select value={homeRegion} onChange={(e) => setHomeRegion(e.target.value)} className="nb-input" disabled={admissionType === "AI"}>
-                  <option value="">Not sure / any</option>
-                  {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </Field>
-              <Field label="Preferred College Region">
-                <select value={region} onChange={(e) => setRegion(e.target.value)} className="nb-input">
-                  <option value="">All regions</option>
-                  {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </Field>
-            </div>
-          )}
         </div>
 
         {err && (
