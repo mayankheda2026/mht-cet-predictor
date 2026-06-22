@@ -104,11 +104,13 @@ export type TopCollege = {
 };
 
 export async function topColleges(limit = 24): Promise<TopCollege[]> {
-  // Rank colleges high→low by their strongest real CAP closing cutoff (the
-  // objective figure straight from the official round PDFs). We count OPEN and
-  // All-India seats across both Gender-Neutral and Ladies pools so women-only
-  // colleges are ranked on their genuine selectivity, and we attach the prestige
-  // tier (lib/prestige.ts) purely as a label/tiebreak — never to reorder cutoffs.
+  // Rank colleges by their Template-2025 prestige (lib/prestige.ts) — the
+  // expert counsellor ordering (tier bands) fused with real flagship OPEN
+  // cutoffs and cross-checked vs NIRF. We deliberately do NOT sort by raw peak
+  // cutoff: a single-seat closing percentile (e.g. one OPEN seat at 99.4%) can
+  // otherwise rocket a mid-tier college above genuine elites. peak is still the
+  // strongest real CAP closing cutoff (OPEN + All-India, Gender-Neutral & Ladies
+  // pools) and is shown as supporting info / a tiebreak only.
   const rows = await prisma.cutoff.findMany({
     where: { category: { in: ["OPEN", "AI"] }, percentile: { not: null } },
     select: { collegeCode: true, percentile: true, college: { select: { name: true, region: true, funding: true, isGovernment: true, isAutonomous: true } } },
@@ -128,6 +130,6 @@ export async function topColleges(limit = 24): Promise<TopCollege[]> {
     }
   }
   return [...best.values()]
-    .sort((a, b) => b.peak - a.peak || b.prestige - a.prestige)
+    .sort((a, b) => b.prestige - a.prestige || b.peak - a.peak)
     .slice(0, limit);
 }

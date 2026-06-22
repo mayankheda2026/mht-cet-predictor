@@ -17,7 +17,7 @@ export default async function CollegesPage() {
 
   return (
     <div>
-      <SectionTitle kicker="Leaderboard" title="Top Colleges by Cutoff" accent="bg-grape text-white" />
+      <SectionTitle kicker="Expert Ranking · Template 2025" title="Top Colleges" accent="bg-grape text-white" />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {top.map((c, i) => (
           <Link key={c.code} href={`/college/${c.code}`}
@@ -33,7 +33,7 @@ export default async function CollegesPage() {
             </div>
             <div className="text-right">
               <div className="font-display text-xl leading-none">{pct(c.peak)}</div>
-              <div className="text-[10px] uppercase text-ink/50">peak open</div>
+              <div className="text-[10px] uppercase text-ink/50">flagship cutoff</div>
             </div>
           </Link>
         ))}
